@@ -36,17 +36,24 @@ const Campaigns = () => {
 
   useEffect(() => { load(); }, [user]);
 
+  // Polling enquanto houver campanhas em "sending" — entrega progressiva estilo Meta Ads
+  useEffect(() => {
+    const hasSending = campaigns.some((c) => c.status === "sending");
+    if (!hasSending) return;
+    const t = setInterval(load, 2500);
+    return () => clearInterval(t);
+  }, [campaigns]);
+
   const send = async (id: string) => {
     setSending(id);
     const { data, error } = await supabase.functions.invoke("send-campaign", { body: { campaign_id: id } });
     setSending(null);
-    // Erros 4xx vêm em error.context (Response). Tentamos extrair a mensagem real.
     let errMsg = data?.error || error?.message;
     if (error && (error as any).context && typeof (error as any).context.json === "function") {
       try { const j = await (error as any).context.json(); errMsg = j?.error || errMsg; } catch {}
     }
     if (errMsg) { toast.error(errMsg, { duration: 8000 }); load(); return; }
-    toast.success(`Disparada! ${data.delivered} entregues.`);
+    toast.success(`Campanha em entrega! Acompanhe o progresso em tempo real.`);
     refreshProfile();
     load();
   };
@@ -132,6 +139,25 @@ const Campaigns = () => {
                 </div>
 
                 <div className="mt-3 p-3 rounded-lg bg-secondary/40 text-sm whitespace-pre-wrap line-clamp-3">{c.message}</div>
+
+                {c.status === "sending" && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="text-primary font-bold flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Entregando DMs...
+                      </span>
+                      <span className="font-black tabular-nums">
+                        {c.total_delivered.toLocaleString("pt-BR")} / {c.target_count.toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary to-primary-glow transition-all duration-500"
+                        style={{ width: `${Math.min(100, ((c.total_delivered + c.total_failed) / Math.max(1, c.target_count)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {c.status !== "draft" && (
                   <>
