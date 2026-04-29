@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,53 +7,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageIcon, Loader2, Send, Save, X } from "lucide-react";
+import { ImageIcon, Loader2, Send, Save, X, Users, Coins, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-
-type Server = { id: string; name: string; icon_url: string | null; guild_id: string; bot_in_server: boolean };
-type Channel = { id: string; name: string };
 
 const COLORS = ["#5865F2", "#57F287", "#FEE75C", "#EB459E", "#ED4245", "#9B59B6"];
 
 const NewCampaign = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useProfile();
-  const [servers, setServers] = useState<Server[]>([]);
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [serverId, setServerId] = useState("");
-  const [channelId, setChannelId] = useState("");
+  const { profile, refresh: refreshProfile } = useProfile();
+
+  const [title, setTitle] = useState("");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [buttonLabel, setButtonLabel] = useState("Acessar agora");
+  const [buttonUrl, setButtonUrl] = useState("");
   const [color, setColor] = useState("#5865F2");
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [loadingChannels, setLoadingChannels] = useState(false);
+  const [reach, setReach] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
-    supabase.from("discord_servers").select("id, name, icon_url, guild_id, bot_in_server").eq("user_id", user.id).then(({ data }) => {
-      const list = (data ?? []) as Server[];
-      setServers(list);
-      const firstWithBot = list.find((s) => s.bot_in_server);
-      if (firstWithBot) setServerId(firstWithBot.id);
+    supabase.from("discord_servers").select("member_count").then(({ data }) => {
+      const total = (data ?? []).reduce((s, x: any) => s + (x.member_count || 0), 0);
+      setReach(total);
     });
-  }, [user]);
-
-  const selectedServer = useMemo(() => servers.find((s) => s.id === serverId), [servers, serverId]);
-
-  useEffect(() => {
-    if (!selectedServer || !selectedServer.bot_in_server) { setChannels([]); return; }
-    setLoadingChannels(true);
-    supabase.functions.invoke("discord-list-channels", { body: { guild_id: selectedServer.guild_id } }).then(({ data }) => {
-      setLoadingChannels(false);
-      if (data?.channels) {
-        setChannels(data.channels);
-        if (data.channels[0]) setChannelId(data.channels[0].id);
-      }
-    });
-  }, [selectedServer]);
+  }, []);
 
   const uploadImage = async (file: File) => {
     if (!user) return;
@@ -68,20 +48,25 @@ const NewCampaign = () => {
     toast.success("Imagem enviada!");
   };
 
+  const validateUrl = (url: string) => {
+    try { new URL(url); return true; } catch { return false; }
+  };
+
   const save = async (sendNow: boolean) => {
     if (!user || !profile) return;
-    if (!serverId) return toast.error("Selecione um servidor");
-    if (!selectedServer?.bot_in_server) return toast.error("Instale o bot nesse servidor primeiro");
-    if (!channelId) return toast.error("Selecione um canal");
-    if (!name.trim()) return toast.error("Dê um nome à campanha");
+    if (!name.trim()) return toast.error("Dê um nome interno à campanha");
+    if (!title.trim()) return toast.error("Coloque um título");
     if (!message.trim()) return toast.error("Escreva a mensagem");
+    if (buttonUrl && !validateUrl(buttonUrl)) return toast.error("URL do botão inválida");
+    if (sendNow && (profile.credits ?? 0) < 1) return toast.error("Sem créditos. Recarregue antes de enviar.");
 
     setBusy(true);
-    const channelName = channels.find((c) => c.id === channelId)?.name ?? null;
     const { data, error } = await supabase.from("campaigns").insert({
-      user_id: user.id, server_id: serverId, name, message,
+      user_id: user.id, name, title, message,
       image_url: imageUrl || null, embed_color: color,
-      channel_id: channelId, channel_name: channelName, status: "draft",
+      button_label: buttonUrl ? buttonLabel : null,
+      button_url: buttonUrl || null,
+      status: "draft",
     }).select().single();
 
     if (error || !data) { setBusy(false); return toast.error(error?.message ?? "Erro"); }
@@ -89,63 +74,42 @@ const NewCampaign = () => {
     if (sendNow) {
       const { data: sd, error: se } = await supabase.functions.invoke("send-campaign", { body: { campaign_id: data.id } });
       if (se || sd?.error) { setBusy(false); toast.error("Falha ao enviar: " + (sd?.error || se?.message)); return; }
-      toast.success("Campanha enviada! 🚀");
+      toast.success(`Campanha em envio! Alcançando ${sd.targeted} membros.`);
+      refreshProfile();
     } else {
       toast.success("Campanha salva como rascunho");
     }
     navigate("/app/campanhas");
   };
 
-  const previewName = profile?.discord_username || "ServerBoost Bot";
+  const previewName = profile?.discord_username || "Anúncio";
   const previewAvatar = profile?.avatar_url;
 
   return (
     <div className="grid lg:grid-cols-2 gap-6 max-w-7xl">
-      {/* Form */}
       <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); save(false); }}>
+        {/* Alcance e custo */}
+        <div className="rounded-xl bg-gradient-to-br from-primary/10 to-primary-glow/10 border border-primary/20 p-4 flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2"><Users className="h-4 w-4 text-primary" /><div><div className="text-xs text-muted-foreground">Alcance estimado</div><div className="font-bold">{reach.toLocaleString("pt-BR")} pessoas</div></div></div>
+          <div className="flex items-center gap-2"><Coins className="h-4 w-4 text-primary" /><div><div className="text-xs text-muted-foreground">Custo</div><div className="font-bold">{reach} créditos</div></div></div>
+          <div className="ml-auto text-xs text-muted-foreground">Saldo: <span className="font-bold text-foreground">{profile?.credits ?? 0}</span></div>
+        </div>
+
         <div className="rounded-xl bg-card border border-border p-5 space-y-4">
           <div>
-            <Label>Servidor</Label>
-            {servers.length === 0 ? (
-              <p className="text-sm text-muted-foreground mt-2">Nenhum servidor conectado. <a href="/app/servidores" className="text-primary underline">Conectar</a></p>
-            ) : (
-              <div className="grid sm:grid-cols-2 gap-2 mt-2">
-                {servers.map((s) => (
-                  <button key={s.id} type="button" onClick={() => setServerId(s.id)}
-                    className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition ${serverId === s.id ? "border-primary bg-primary/10" : "border-border bg-secondary/40 hover:border-primary/40"} ${!s.bot_in_server && "opacity-50"}`}>
-                    {s.icon_url ? <img src={s.icon_url} className="h-9 w-9 rounded-lg" alt="" /> : <div className="h-9 w-9 rounded-lg bg-primary/20 grid place-items-center text-sm font-bold">{s.name[0]}</div>}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold truncate">{s.name}</div>
-                      <div className={`text-[10px] ${s.bot_in_server ? "text-success" : "text-warning"}`}>{s.bot_in_server ? "Bot ativo" : "Sem bot"}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <Label htmlFor="name">Nome interno</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Promo de inverno" className="mt-2" maxLength={100} />
           </div>
 
-          {selectedServer?.bot_in_server && (
-            <div>
-              <Label>Canal</Label>
-              {loadingChannels ? (
-                <div className="mt-2 p-3 rounded-lg bg-secondary/40 text-sm flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Buscando canais...</div>
-              ) : (
-                <select value={channelId} onChange={(e) => setChannelId(e.target.value)} className="mt-2 w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                  {channels.map((c) => <option key={c.id} value={c.id}>#{c.name}</option>)}
-                </select>
-              )}
-            </div>
-          )}
-
           <div>
-            <Label htmlFor="name">Nome da campanha (interno)</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Promo de inverno" className="mt-2" />
+            <Label htmlFor="title">Título do anúncio</Label>
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="🎉 Confira nossa loja!" className="mt-2" maxLength={120} />
           </div>
 
           <div>
             <Label htmlFor="message">Mensagem</Label>
-            <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="O que você quer anunciar? Suporta **negrito**, *itálico*, links, emojis 🎉" className="mt-2 min-h-[140px]" />
-            <p className="text-xs text-muted-foreground mt-1">{message.length} caracteres</p>
+            <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Descreva o que você está divulgando. Suporta **negrito**, *itálico*, emojis 🎉" className="mt-2 min-h-[140px]" maxLength={2000} />
+            <p className="text-xs text-muted-foreground mt-1">{message.length}/2000</p>
           </div>
 
           <div>
@@ -158,15 +122,24 @@ const NewCampaign = () => {
                   {uploading ? "Enviando..." : "Escolher imagem"}
                 </div>
               </label>
-              {imageUrl && (
-                <Button type="button" size="sm" variant="ghost" onClick={() => setImageUrl("")} className="gap-1"><X className="h-3 w-3" /> Remover</Button>
-              )}
+              {imageUrl && <Button type="button" size="sm" variant="ghost" onClick={() => setImageUrl("")} className="gap-1"><X className="h-3 w-3" /> Remover</Button>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="bl">Texto do botão</Label>
+              <Input id="bl" value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)} placeholder="Acessar" className="mt-2" maxLength={80} />
+            </div>
+            <div>
+              <Label htmlFor="bu">URL do botão</Label>
+              <Input id="bu" value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} placeholder="https://discord.gg/..." className="mt-2" />
             </div>
           </div>
 
           <div>
             <Label>Cor da borda</Label>
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 flex-wrap">
               {COLORS.map((c) => (
                 <button key={c} type="button" onClick={() => setColor(c)}
                   className={`h-9 w-9 rounded-lg border-2 transition ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
@@ -179,22 +152,18 @@ const NewCampaign = () => {
         <div className="flex gap-2">
           <Button type="submit" variant="secondary" disabled={busy} className="flex-1 gap-2"><Save className="h-4 w-4" /> Salvar rascunho</Button>
           <Button type="button" variant="discord" disabled={busy} onClick={() => save(true)} className="flex-1 gap-2">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Salvar e enviar
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Salvar e disparar
           </Button>
         </div>
       </form>
 
-      {/* Discord Preview */}
+      {/* Discord DM Preview */}
       <div className="lg:sticky lg:top-8 self-start">
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Preview no Discord</div>
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Preview da DM no Discord</div>
         <div className="rounded-xl bg-[#313338] border border-[#1e1f22] p-4 shadow-2xl">
-          {/* Channel header */}
           <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#3f4147]">
-            <span className="text-[#80848e] text-xl">#</span>
-            <span className="text-white font-semibold">{channels.find(c => c.id === channelId)?.name ?? "canal"}</span>
+            <span className="text-[#80848e] text-xs uppercase tracking-wider">Mensagem direta</span>
           </div>
-
-          {/* Bot message */}
           <div className="flex gap-3">
             {previewAvatar ? (
               <img src={previewAvatar} className="h-10 w-10 rounded-full shrink-0" alt="" />
@@ -205,24 +174,29 @@ const NewCampaign = () => {
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-white font-semibold text-[15px]">{previewName}</span>
                 <span className="px-1.5 py-0.5 rounded bg-[#5865F2] text-white text-[10px] font-bold leading-none">APP</span>
-                <span className="text-[#949ba4] text-xs">hoje às {new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="text-[#949ba4] text-xs">hoje</span>
               </div>
-              {/* Embed */}
               <div className="mt-1.5 flex">
                 <div className="w-1 rounded-l" style={{ backgroundColor: color }} />
                 <div className="bg-[#2b2d31] rounded-r p-3 max-w-[440px] flex-1">
+                  {title && <div className="text-white font-bold text-base mb-1.5">{title}</div>}
                   <div className="text-[#dbdee1] text-sm whitespace-pre-wrap break-words">
                     {message || <span className="text-[#80848e] italic">Sua mensagem aparecerá aqui...</span>}
                   </div>
-                  {imageUrl && (
-                    <img src={imageUrl} className="mt-2 rounded max-w-full max-h-72 object-contain" alt="" />
+                  {imageUrl && <img src={imageUrl} className="mt-2 rounded max-w-full max-h-72 object-contain" alt="" />}
+                  {buttonUrl && (
+                    <div className="mt-3">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#4e5058] hover:bg-[#6d6f78] text-white text-sm font-medium cursor-pointer">
+                        <ExternalLink className="h-3.5 w-3.5" /> {buttonLabel || "Acessar"}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">É exatamente assim que vai aparecer no Discord.</p>
+        <p className="text-xs text-muted-foreground mt-2 text-center">É exatamente assim que vai chegar na DM dos membros.</p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,9 +8,11 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import AppLayout from "./layouts/AppLayout";
-import Servers from "./pages/app/Servers";
+import Dashboard from "./pages/app/Dashboard";
+import Network from "./pages/app/Network";
 import Campaigns from "./pages/app/Campaigns";
 import NewCampaign from "./pages/app/NewCampaign";
+import Credits from "./pages/app/Credits";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -26,10 +28,11 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-            <Route index element={<Navigate to="/app/servidores" replace />} />
-            <Route path="servidores" element={<Servers />} />
+            <Route index element={<Dashboard />} />
+            <Route path="rede" element={<Network />} />
             <Route path="campanhas" element={<Campaigns />} />
             <Route path="campanhas/nova" element={<NewCampaign />} />
+            <Route path="creditos" element={<Credits />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

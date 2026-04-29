@@ -2,30 +2,34 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
-import { Plus, Send, Trash2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Plus, Send, Trash2, CheckCircle2, XCircle, Clock, Users, MousePointerClick, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Campaign = {
-  id: string; name: string; message: string; image_url: string | null;
-  status: string; sent_at: string | null; channel_name: string | null;
-  error_message: string | null; created_at: string;
-  discord_servers: { name: string; icon_url: string | null } | null;
+  id: string; name: string; title: string; message: string; image_url: string | null;
+  status: string; sent_at: string | null;
+  total_targeted: number; total_delivered: number; total_failed: number; total_clicks: number;
+  credits_spent: number; created_at: string; button_label: string | null; button_url: string | null;
 };
 
 const Campaigns = () => {
   const { user } = useAuth();
+  const { refresh: refreshProfile } = useProfile();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [sending, setSending] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("campaigns")
-      .select("*, discord_servers(name, icon_url)")
+      .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     setCampaigns((data as any) ?? []);
+    setLoading(false);
   };
 
   useEffect(() => { load(); }, [user]);
@@ -35,11 +39,12 @@ const Campaigns = () => {
     const { data, error } = await supabase.functions.invoke("send-campaign", { body: { campaign_id: id } });
     setSending(null);
     if (error || data?.error) {
-      toast.error("Falha ao enviar: " + (data?.error || error?.message || "erro desconhecido"));
+      toast.error("Falha: " + (data?.error || error?.message || "erro"));
       load();
       return;
     }
-    toast.success("Campanha enviada! 🚀");
+    toast.success(`Disparada! ${data.targeted} alvos.`);
+    refreshProfile();
     load();
   };
 
@@ -52,53 +57,81 @@ const Campaigns = () => {
   const StatusBadge = ({ status }: { status: string }) => {
     const map: Record<string, { icon: any; cls: string; label: string }> = {
       draft: { icon: Clock, cls: "bg-muted text-muted-foreground", label: "Rascunho" },
+      sending: { icon: Loader2, cls: "bg-primary/15 text-primary", label: "Enviando..." },
       sent: { icon: CheckCircle2, cls: "bg-success/15 text-success", label: "Enviada" },
       failed: { icon: XCircle, cls: "bg-destructive/15 text-destructive", label: "Falhou" },
     };
     const m = map[status] ?? map.draft;
     const I = m.icon;
-    return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${m.cls}`}><I className="h-3 w-3" />{m.label}</span>;
+    return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${m.cls}`}><I className={`h-3 w-3 ${status === "sending" ? "animate-spin" : ""}`} />{m.label}</span>;
   };
 
   return (
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Crie mensagens, escolha o servidor e envie pelo bot.</p>
-        <Link to="/app/campanhas/nova"><Button variant="discord" className="gap-2"><Plus className="h-4 w-4" /> Nova campanha</Button></Link>
+        <div>
+          <h2 className="text-xl font-bold">Campanhas</h2>
+          <p className="text-sm text-muted-foreground">Anúncios disparados via DM para a rede do bot.</p>
+        </div>
+        <Link to="/app/campanhas/nova"><Button variant="discord" className="gap-2"><Plus className="h-4 w-4" /> Nova</Button></Link>
       </div>
 
-      {campaigns.length === 0 ? (
+      {loading ? (
+        <div className="grid place-items-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : campaigns.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-12 text-center">
           <p className="text-muted-foreground text-sm">Nenhuma campanha ainda.</p>
           <Link to="/app/campanhas/nova"><Button variant="discord" className="mt-4 gap-2"><Plus className="h-4 w-4" /> Criar a primeira</Button></Link>
         </div>
       ) : (
         <div className="space-y-3">
-          {campaigns.map((c) => (
-            <div key={c.id} className="rounded-xl bg-card border border-border p-4 md:p-5">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 className="font-bold">{c.name}</h3>
-                    <StatusBadge status={c.status} />
+          {campaigns.map((c) => {
+            const ctr = c.total_delivered > 0 ? ((c.total_clicks / c.total_delivered) * 100).toFixed(1) : "0.0";
+            return (
+              <div key={c.id} className="rounded-xl bg-card border border-border p-4 md:p-5">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="font-bold">{c.name}</h3>
+                      <StatusBadge status={c.status} />
+                    </div>
+                    <div className="text-xs text-muted-foreground">{c.title || "(sem título)"}</div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {c.discord_servers?.name ?? "—"} {c.channel_name ? `· #${c.channel_name}` : ""}
+                  <div className="flex gap-2">
+                    {c.status === "draft" && (
+                      <Button size="sm" variant="discord" disabled={sending === c.id} onClick={() => send(c.id)} className="gap-1.5">
+                        <Send className="h-3.5 w-3.5" /> {sending === c.id ? "Enviando..." : "Disparar"}
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  {c.status !== "sent" && (
-                    <Button size="sm" variant="discord" disabled={sending === c.id} onClick={() => send(c.id)} className="gap-1.5">
-                      <Send className="h-3.5 w-3.5" /> {sending === c.id ? "Enviando..." : "Enviar"}
-                    </Button>
-                  )}
-                  <Button size="icon" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
+
+                <div className="mt-3 p-3 rounded-lg bg-secondary/40 text-sm whitespace-pre-wrap line-clamp-3">{c.message}</div>
+
+                {c.status !== "draft" && (
+                  <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                    <div className="p-2 rounded-lg bg-secondary/30">
+                      <div className="text-[10px] text-muted-foreground uppercase flex items-center justify-center gap-1"><Users className="h-3 w-3" /> Alvo</div>
+                      <div className="font-bold">{c.total_targeted}</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-success/10">
+                      <div className="text-[10px] text-success uppercase">Entregues</div>
+                      <div className="font-bold text-success">{c.total_delivered}</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-destructive/10">
+                      <div className="text-[10px] text-destructive uppercase">Falhas</div>
+                      <div className="font-bold text-destructive">{c.total_failed}</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <div className="text-[10px] text-primary uppercase flex items-center justify-center gap-1"><MousePointerClick className="h-3 w-3" /> Cliques</div>
+                      <div className="font-bold text-primary">{c.total_clicks} <span className="text-[10px] text-muted-foreground">({ctr}%)</span></div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="mt-3 p-3 rounded-lg bg-secondary/40 text-sm whitespace-pre-wrap line-clamp-3">{c.message}</div>
-              {c.error_message && <p className="text-xs text-destructive mt-2">⚠ {c.error_message}</p>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
