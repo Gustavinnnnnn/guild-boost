@@ -30,6 +30,7 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="campanhas" element={<Campaigns />} />
             <Route path="campanhas/nova" element={<NewCampaign />} />
+            <Route path="campanhas/:id/editar" element={<NewCampaign />} />
             <Route path="creditos" element={<Credits />} />
           </Route>
           <Route path="*" element={<NotFound />} />
