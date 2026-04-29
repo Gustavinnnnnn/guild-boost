@@ -24,10 +24,8 @@ export const useProfile = () => {
   useEffect(() => {
     refresh();
     if (!user) return;
-    const ch = supabase
-      .channel(`profile-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, () => refresh())
-      .subscribe();
+    const ch = supabase.channel(`profile-${user.id}-${Math.random().toString(36).slice(2)}`);
+    ch.on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, () => refresh()).subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
