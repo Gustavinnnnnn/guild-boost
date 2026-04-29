@@ -84,6 +84,7 @@ export type Database = {
           status: string
           target_category: string | null
           target_count: number
+          target_niches: string[]
           title: string
           total_clicks: number
           total_delivered: number
@@ -111,6 +112,7 @@ export type Database = {
           status?: string
           target_category?: string | null
           target_count?: number
+          target_niches?: string[]
           title?: string
           total_clicks?: number
           total_delivered?: number
@@ -138,6 +140,7 @@ export type Database = {
           status?: string
           target_category?: string | null
           target_count?: number
+          target_niches?: string[]
           title?: string
           total_clicks?: number
           total_delivered?: number
@@ -200,6 +203,7 @@ export type Database = {
           last_synced_at: string | null
           member_count: number | null
           name: string
+          niche: string | null
           owner_discord_id: string | null
           updated_at: string
         }
@@ -213,6 +217,7 @@ export type Database = {
           last_synced_at?: string | null
           member_count?: number | null
           name: string
+          niche?: string | null
           owner_discord_id?: string | null
           updated_at?: string
         }
@@ -226,6 +231,7 @@ export type Database = {
           last_synced_at?: string | null
           member_count?: number | null
           name?: string
+          niche?: string | null
           owner_discord_id?: string | null
           updated_at?: string
         }
