@@ -109,28 +109,31 @@ Deno.serve(async (req) => {
     }
 
     const targetCount = campaign.target_count || 100;
-    const requiredCoins = Math.ceil(targetCount / 10);
+    // Custo em CENTAVOS de R$: 2 centavos por DM (R$ 0,02 cada)
+    const CENTS_PER_DM = 2;
+    const requiredCents = targetCount * CENTS_PER_DM;
+    const fmtBRL = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
     const { data: profile } = await admin.from("profiles").select("credits").eq("id", userId).single();
-    if (!profile || profile.credits < requiredCoins) {
+    if (!profile || profile.credits < requiredCents) {
       return new Response(JSON.stringify({
-        error: `Créditos insuficientes. Você precisa de ${requiredCoins} coins (tem ${profile?.credits ?? 0}).`,
-        required: requiredCoins, have: profile?.credits ?? 0,
+        error: `Saldo insuficiente. Você precisa de ${fmtBRL(requiredCents)} (tem ${fmtBRL(profile?.credits ?? 0)}).`,
+        required: requiredCents, have: profile?.credits ?? 0,
       }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Debita coins na hora (estilo Meta Ads — você paga pelo alcance contratado)
-    const newBalance = profile.credits - requiredCoins;
+    // Debita na hora (estilo Meta Ads — você paga pelo alcance contratado)
+    const newBalance = profile.credits - requiredCents;
     await admin.from("profiles").update({ credits: newBalance }).eq("id", userId);
     await admin.from("credit_transactions").insert({
-      user_id: userId, amount: -requiredCoins, type: "campaign_spend",
-      description: `Campanha: ${campaign.name} (${targetCount} DMs)`,
+      user_id: userId, amount: -requiredCents, type: "campaign_spend",
+      description: `Campanha: ${campaign.name} (${targetCount} DMs · ${fmtBRL(requiredCents)})`,
       campaign_id, balance_after: newBalance,
     });
 
     await admin.from("campaigns").update({
       status: "sending", sent_at: new Date().toISOString(),
-      total_targeted: targetCount, credits_spent: requiredCoins,
+      total_targeted: targetCount, credits_spent: requiredCents,
       total_delivered: 0, total_failed: 0, total_clicks: 0,
       failed_blocked: 0, failed_dm_closed: 0, failed_deleted: 0, failed_other: 0,
       error_message: null,
@@ -160,7 +163,8 @@ Deno.serve(async (req) => {
       success: true,
       message: "Campanha em entrega",
       targeted: targetCount,
-      coins_spent: requiredCoins,
+      cents_spent: requiredCents,
+      cost_brl: fmtBRL(requiredCents),
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown";
