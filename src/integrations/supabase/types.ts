@@ -14,11 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_deliveries: {
+        Row: {
+          campaign_id: string
+          clicked_at: string | null
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          guild_id: string | null
+          id: string
+          recipient_discord_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          clicked_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          guild_id?: string | null
+          id?: string
+          recipient_discord_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          clicked_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          guild_id?: string | null
+          id?: string
+          recipient_discord_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_deliveries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
-          channel_id: string | null
-          channel_name: string | null
+          button_label: string | null
+          button_url: string | null
           created_at: string
+          credits_spent: number
           embed_color: string | null
           error_message: string | null
           id: string
@@ -26,15 +74,20 @@ export type Database = {
           message: string
           name: string
           sent_at: string | null
-          server_id: string | null
           status: string
+          title: string
+          total_clicks: number
+          total_delivered: number
+          total_failed: number
+          total_targeted: number
           updated_at: string
           user_id: string
         }
         Insert: {
-          channel_id?: string | null
-          channel_name?: string | null
+          button_label?: string | null
+          button_url?: string | null
           created_at?: string
+          credits_spent?: number
           embed_color?: string | null
           error_message?: string | null
           id?: string
@@ -42,15 +95,20 @@ export type Database = {
           message: string
           name: string
           sent_at?: string | null
-          server_id?: string | null
           status?: string
+          title?: string
+          total_clicks?: number
+          total_delivered?: number
+          total_failed?: number
+          total_targeted?: number
           updated_at?: string
           user_id: string
         }
         Update: {
-          channel_id?: string | null
-          channel_name?: string | null
+          button_label?: string | null
+          button_url?: string | null
           created_at?: string
+          credits_spent?: number
           embed_color?: string | null
           error_message?: string | null
           id?: string
@@ -58,17 +116,54 @@ export type Database = {
           message?: string
           name?: string
           sent_at?: string | null
-          server_id?: string | null
           status?: string
+          title?: string
+          total_clicks?: number
+          total_delivered?: number
+          total_failed?: number
+          total_targeted?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          campaign_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          campaign_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          campaign_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          type?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "campaigns_server_id_fkey"
-            columns: ["server_id"]
+            foreignKeyName: "credit_transactions_campaign_id_fkey"
+            columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "discord_servers"
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -77,41 +172,38 @@ export type Database = {
         Row: {
           bot_in_server: boolean | null
           created_at: string
-          default_channel_id: string | null
-          default_channel_name: string | null
           guild_id: string
           icon_url: string | null
           id: string
+          last_synced_at: string | null
           member_count: number | null
           name: string
+          owner_discord_id: string | null
           updated_at: string
-          user_id: string
         }
         Insert: {
           bot_in_server?: boolean | null
           created_at?: string
-          default_channel_id?: string | null
-          default_channel_name?: string | null
           guild_id: string
           icon_url?: string | null
           id?: string
+          last_synced_at?: string | null
           member_count?: number | null
           name: string
+          owner_discord_id?: string | null
           updated_at?: string
-          user_id: string
         }
         Update: {
           bot_in_server?: boolean | null
           created_at?: string
-          default_channel_id?: string | null
-          default_channel_name?: string | null
           guild_id?: string
           icon_url?: string | null
           id?: string
+          last_synced_at?: string | null
           member_count?: number | null
           name?: string
+          owner_discord_id?: string | null
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -119,6 +211,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          credits: number
           discord_access_token: string | null
           discord_id: string | null
           discord_refresh_token: string | null
@@ -131,6 +224,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          credits?: number
           discord_access_token?: string | null
           discord_id?: string | null
           discord_refresh_token?: string | null
@@ -143,6 +237,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          credits?: number
           discord_access_token?: string | null
           discord_id?: string | null
           discord_refresh_token?: string | null

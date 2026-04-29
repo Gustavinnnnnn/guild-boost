@@ -1,13 +1,15 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Server, Megaphone, LogOut, Plus } from "lucide-react";
+import { LayoutDashboard, Server, Megaphone, LogOut, Plus, Coins } from "lucide-react";
 import { DiscordIcon } from "@/components/DiscordIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 
 const nav = [
-  { to: "/app/servidores", label: "Meus Servidores", icon: Server },
-  { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/app/rede", label: "Rede do Bot", icon: Server, end: false },
+  { to: "/app/campanhas", label: "Campanhas", icon: Megaphone, end: false },
+  { to: "/app/creditos", label: "Créditos", icon: Coins, end: false },
 ];
 
 const AppLayout = () => {
@@ -21,10 +23,9 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Sidebar */}
       <aside className="hidden md:flex w-64 border-r border-border bg-card flex-col">
         <div className="p-5 border-b border-border">
-          <Link to="/app/servidores" className="flex items-center gap-2.5">
+          <Link to="/app" className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary-glow grid place-items-center shadow-glow">
               <DiscordIcon className="h-5 w-5 text-white" />
             </div>
@@ -34,7 +35,7 @@ const AppLayout = () => {
 
         <nav className="flex-1 p-3 space-y-1">
           {nav.map((n) => (
-            <NavLink key={n.to} to={n.to} end className={({ isActive }) =>
+            <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
                 isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`
@@ -48,7 +49,12 @@ const AppLayout = () => {
           </Link>
         </nav>
 
-        <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border space-y-2">
+          <Link to="/app/creditos" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/15 to-primary-glow/15 hover:from-primary/25 hover:to-primary-glow/25 transition">
+            <Coins className="h-4 w-4 text-primary" />
+            <span className="text-xs text-muted-foreground">Saldo</span>
+            <span className="ml-auto font-bold text-sm">{profile?.credits ?? 0}</span>
+          </Link>
           <div className="flex items-center gap-2.5 px-2 py-2">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} className="h-9 w-9 rounded-full" alt="" />
@@ -66,35 +72,35 @@ const AppLayout = () => {
         </div>
       </aside>
 
-      {/* Mobile header */}
       <header className="md:hidden border-b border-border bg-card px-4 py-3 flex items-center justify-between">
-        <Link to="/app/servidores" className="flex items-center gap-2">
+        <Link to="/app" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow grid place-items-center">
             <DiscordIcon className="h-4 w-4 text-white" />
           </div>
           <span className="font-bold">ServerBoost</span>
         </Link>
-        <Button size="icon" variant="ghost" onClick={logout}><LogOut className="h-4 w-4" /></Button>
+        <div className="flex items-center gap-2">
+          <Link to="/app/creditos" className="flex items-center gap-1 px-2 py-1 rounded bg-primary/15">
+            <Coins className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-bold">{profile?.credits ?? 0}</span>
+          </Link>
+          <Button size="icon" variant="ghost" onClick={logout}><LogOut className="h-4 w-4" /></Button>
+        </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8 overflow-x-hidden">
         <Outlet />
       </main>
 
-      {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex z-50">
         {nav.map((n) => (
-          <NavLink key={n.to} to={n.to} end className={({ isActive }) =>
-            `flex-1 flex flex-col items-center gap-1 py-3 text-xs ${isActive ? "text-primary" : "text-muted-foreground"}`
+          <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) =>
+            `flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] ${isActive ? "text-primary" : "text-muted-foreground"}`
           }>
             <n.icon className="h-5 w-5" />
             {n.label.split(" ")[0]}
           </NavLink>
         ))}
-        <Link to="/app/campanhas/nova" className="flex-1 flex flex-col items-center gap-1 py-3 text-xs text-foreground">
-          <Plus className="h-5 w-5" /> Nova
-        </Link>
       </nav>
     </div>
   );

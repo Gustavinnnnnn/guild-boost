@@ -9,6 +9,7 @@ export type Profile = {
   discord_id: string | null;
   discord_username: string | null;
   discord_access_token: string | null;
+  credits: number;
 };
 
 export const useProfile = () => {
@@ -20,7 +21,7 @@ export const useProfile = () => {
     if (!user) { setProfile(null); setLoading(false); return; }
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, avatar_url, discord_id, discord_username, discord_access_token")
+      .select("id, username, avatar_url, discord_id, discord_username, discord_access_token, credits")
       .eq("id", user.id)
       .maybeSingle();
     setProfile(data as Profile | null);
