@@ -104,19 +104,23 @@ Deno.serve(async (req) => {
     discord_token_expires_at: expiresAt,
   });
 
-  // 5) Generate a magic link the frontend can consume to set a session
+  // 5) Generate a magic-link token and send it directly to the app origin.
+  // Avoid redirecting through the auth action_link, because hosted/custom domains
+  // can otherwise fall back to the backend's default site URL.
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email: discordUser.email,
-    options: { redirectTo: `${appOrigin}/auth/callback` },
   });
 
-  if (linkErr || !linkData) {
+  const tokenHash = linkData?.properties?.hashed_token;
+
+  if (linkErr || !tokenHash) {
     console.error("generateLink failed:", linkErr);
     return Response.redirect(`${appOrigin}/auth?discord_error=session`, 302);
   }
 
-  // The action_link points to Supabase /verify which then redirects to redirectTo
-  // with tokens in the URL hash. Just send the user there.
-  return Response.redirect(linkData.properties.action_link, 302);
+  const callbackUrl = new URL(`${appOrigin}/auth/callback`);
+  callbackUrl.searchParams.set("token_hash", tokenHash);
+  callbackUrl.searchParams.set("type", "magiclink");
+  return Response.redirect(callbackUrl.toString(), 302);
 });
