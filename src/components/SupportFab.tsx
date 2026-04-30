@@ -85,15 +85,17 @@ export const SupportFab = () => {
             <X className="h-6 w-6 text-foreground" />
           </span>
         ) : (
-          <span className="relative grid h-14 w-14 place-items-center rounded-full border border-border bg-card shadow-lg sm:hidden">
-            <DiscordIcon className="h-6 w-6 text-primary" />
-          </span>
-          <img
-            src={supportMascot}
-            alt="Suporte"
-            className="relative hidden h-24 w-24 object-contain drop-shadow-[0_6px_20px_rgba(88,101,242,0.6)] sm:block"
-            draggable={false}
-          />
+          <>
+            <span className="relative grid h-14 w-14 place-items-center rounded-full border border-border bg-card shadow-lg sm:hidden">
+              <DiscordIcon className="h-6 w-6 text-primary" />
+            </span>
+            <img
+              src={supportMascot}
+              alt="Suporte"
+              className="relative hidden h-24 w-24 object-contain drop-shadow-[0_6px_20px_rgba(88,101,242,0.6)] sm:block"
+              draggable={false}
+            />
+          </>
         )}
       </button>
     </div>
