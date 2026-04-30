@@ -33,17 +33,17 @@ const formatDMs = (n: number) => n.toLocaleString("pt-BR");
 
 const PACKAGES = [
   {
-    dms: 400, bonus: 0, priceBRL: 20, icon: Zap, label: "Starter",
+    dms: 1000, bonus: 0, priceBRL: 50, icon: Zap, label: "Starter",
     desc: "Ideal pra testar", popular: false,
     accent: "from-sky-500 to-cyan-400",
   },
   {
-    dms: 1000, bonus: 100, priceBRL: 50, icon: Rocket, label: "Pro",
+    dms: 2200, bonus: 200, priceBRL: 100, icon: Rocket, label: "Pro",
     desc: "O mais escolhido", popular: true,
     accent: "from-primary to-primary-glow",
   },
   {
-    dms: 4000, bonus: 600, priceBRL: 200, icon: Crown, label: "Business",
+    dms: 4500, bonus: 500, priceBRL: 200, icon: Crown, label: "Business",
     desc: "Pra campanhas grandes", popular: false,
     accent: "from-amber-400 to-orange-500",
   },
