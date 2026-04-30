@@ -361,7 +361,7 @@ const Credits = () => {
                 {/* Atalhos */}
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   <span className="text-[10px] text-muted-foreground self-center mr-1">Atalhos:</span>
-                  {[20, 30, 50, 100, 150, 300].map((v) => (
+                  {[50, 80, 100, 150, 250, 500].map((v) => (
                     <button
                       key={v}
                       onClick={() => setCustomBRL(String(v))}
