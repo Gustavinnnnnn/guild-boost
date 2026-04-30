@@ -152,7 +152,7 @@ const Landing = () => {
           </div>
 
           <p className="mt-5 text-xs text-muted-foreground">
-            Login em 5 segundos · Sem cartão · Mínimo R$ 50
+            Login em 5 segundos · Sem cartão · Mínimo R$ 25
           </p>
 
           {/* mock dashboard glance */}
