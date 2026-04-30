@@ -20,9 +20,9 @@ type Tx = {
 };
 
 // 1 DM = R$ 0,05  (internamente armazenado como "coins" no DB, mas exibimos sempre como DMs)
-const PRICE_PER_DM = 0.05;
+const PRICE_PER_DM = 0.20;
 const MIN_DEPOSIT_BRL = 30;
-const MIN_DMS = Math.round(MIN_DEPOSIT_BRL / PRICE_PER_DM); // 600
+const MIN_DMS = Math.round(MIN_DEPOSIT_BRL / PRICE_PER_DM); // 150
 
 const dmsToBRL = (dms: number) => dms * PRICE_PER_DM;
 const brlToDms = (brl: number) => Math.floor(brl / PRICE_PER_DM);
@@ -33,23 +33,23 @@ const formatDMs = (n: number) => n.toLocaleString("pt-BR");
 
 const PACKAGES = [
   {
-    dms: 600, bonus: 0, priceBRL: 30, icon: Zap, label: "Starter",
+    dms: 150, bonus: 0, priceBRL: 30, icon: Zap, label: "Starter",
     desc: "Pra testar a plataforma", popular: false,
     accent: "from-sky-500 to-cyan-400",
   },
   {
-    dms: 1000, bonus: 100, priceBRL: 50, icon: Rocket, label: "Plus",
-    desc: "Bom custo-benefício", popular: false,
+    dms: 250, bonus: 25, priceBRL: 50, icon: Rocket, label: "Plus",
+    desc: "+10% de bônus", popular: false,
     accent: "from-emerald-500 to-teal-400",
   },
   {
-    dms: 3000, bonus: 500, priceBRL: 150, icon: Crown, label: "Pro",
-    desc: "O mais escolhido", popular: true,
+    dms: 750, bonus: 150, priceBRL: 150, icon: Crown, label: "Pro",
+    desc: "+20% de bônus — o mais escolhido", popular: true,
     accent: "from-primary to-primary-glow",
   },
   {
-    dms: 5000, bonus: 1000, priceBRL: 250, icon: Sparkles, label: "Business",
-    desc: "Pra campanhas grandes", popular: false,
+    dms: 1250, bonus: 450, priceBRL: 250, icon: Sparkles, label: "Business",
+    desc: "+36% de bônus — melhor custo/DM", popular: false,
     accent: "from-amber-400 to-orange-500",
   },
 ];
@@ -207,10 +207,10 @@ const Credits = () => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">1 DM = R$ 0,05</span>
-          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">R$ 30 = 600 DMs</span>
-          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">R$ 50 = 1.100 DMs</span>
-          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">R$ 150 = 3.500 DMs</span>
+          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">1 DM = R$ 0,20</span>
+          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">R$ 30 = 150 DMs</span>
+          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">R$ 50 = 275 DMs</span>
+          <span className="px-2.5 py-1 rounded-lg bg-card border border-border font-bold">R$ 150 = 900 DMs</span>
         </div>
       </div>
 

@@ -13,8 +13,8 @@ const PARADISE_API_KEY = Deno.env.get("PARADISE_API_KEY")!;
 const PARADISE_URL = "https://multi.paradisepags.com/api/v1/transaction.php";
 
 // 1 coin = 1 DM · 1 coin = R$ 0,05 → 5 centavos
-const CENTS_PER_COIN = 5;
-const MIN_COINS = 600; // R$ 30,00 mínimo
+const CENTS_PER_COIN = 20;
+const MIN_COINS = 150; // R$ 30,00 mínimo
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     const coins = Math.floor(Number(body.coins));
     const bonus = Math.max(0, Math.floor(Number(body.bonus ?? 0)));
     if (!coins || coins < MIN_COINS || coins > 1_000_000) {
-      return new Response(JSON.stringify({ error: "invalid_amount", message: `Mínimo ${MIN_COINS} DMs (R$ 25,00)` }), {
+      return new Response(JSON.stringify({ error: "invalid_amount", message: `Mínimo ${MIN_COINS} DMs (R$ 30,00)` }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
