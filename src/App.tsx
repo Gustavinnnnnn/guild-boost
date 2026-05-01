@@ -39,7 +39,9 @@ const App = () => (
             <Route path="afiliados" element={<Affiliate />} />
             <Route path="admin" element={<Admin />} />
           </Route>
-          <Route path="/admin" element={<Navigate to="/app/admin" replace />} />
+          <Route path="/admin" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route index element={<Admin />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
