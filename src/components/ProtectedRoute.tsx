@@ -14,7 +14,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   if (!user) {
     const redirect = `${location.pathname}${location.search}`;
-    return <Navigate to={`/auth?redirect=${encodeURIComponent(redirect)}`} replace />;
+    const loginPath = location.pathname === "/admin" || location.pathname.startsWith("/app/admin")
+      ? "/admin-login"
+      : "/auth";
+    return <Navigate to={`${loginPath}?redirect=${encodeURIComponent(redirect)}`} replace />;
   }
 
   return <>{children}</>;
