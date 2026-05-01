@@ -404,7 +404,6 @@ const Landing = () => {
             </div>
           </div>
         </section>
-        </section>
 
         <section id="prova" className="border-b border-border bg-secondary/30">
           <div className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20">
