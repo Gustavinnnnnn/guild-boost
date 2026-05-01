@@ -13,6 +13,7 @@ import Campaigns from "./pages/app/Campaigns";
 import NewCampaign from "./pages/app/NewCampaign";
 import Credits from "./pages/app/Credits";
 import Affiliate from "./pages/app/Affiliate";
+import MyServers from "./pages/app/MyServers";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="campanhas/nova" element={<NewCampaign />} />
             <Route path="campanhas/:id/editar" element={<NewCampaign />} />
             <Route path="creditos" element={<Credits />} />
+            <Route path="servidores" element={<MyServers />} />
             <Route path="afiliados" element={<Affiliate />} />
           </Route>
           <Route path="*" element={<NotFound />} />
