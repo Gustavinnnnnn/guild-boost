@@ -522,6 +522,12 @@ const Credits = () => {
               <div className="rounded-xl border-2 border-border bg-white p-4 grid place-items-center">
                 {deposit.qr_code_base64 ? (
                   <img src={deposit.qr_code_base64} alt="QR Code PIX" className="h-56 w-56" />
+                ) : deposit.qr_code ? (
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=${encodeURIComponent(deposit.qr_code)}`}
+                    alt="QR Code PIX"
+                    className="h-56 w-56"
+                  />
                 ) : (
                   <div className="h-56 w-56 grid place-items-center text-muted-foreground text-xs">
                     QR Code indisponível
