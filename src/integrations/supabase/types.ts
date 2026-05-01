@@ -571,6 +571,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bootstrap_admin_account: { Args: never; Returns: Json }
       generate_affiliate_code: { Args: never; Returns: string }
       has_role: {
         Args: {
