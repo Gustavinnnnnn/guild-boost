@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Megaphone, LogOut, Plus, MessageCircle, Gift } from "lucide-react";
+import { LayoutDashboard, Megaphone, LogOut, Plus, MessageCircle, Gift, Server } from "lucide-react";
 import { DiscordIcon } from "@/components/DiscordIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -10,6 +10,7 @@ const formatDMs = (n: number) => n.toLocaleString("pt-BR");
 const nav = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone, end: false },
+  { to: "/app/servidores", label: "Servidores", icon: Server, end: false },
   { to: "/app/creditos", label: "DMs", icon: MessageCircle, end: false },
   { to: "/app/afiliados", label: "Afiliados", icon: Gift, end: false },
 ];
