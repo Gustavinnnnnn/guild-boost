@@ -14,7 +14,7 @@ const DISCORD_CLIENT_ID = Deno.env.get("DISCORD_CLIENT_ID")!;
 const DISCORD_CLIENT_SECRET = Deno.env.get("DISCORD_CLIENT_SECRET")!;
 
 // Permission flag for ADMINISTRATOR
-const ADMIN = 0x8n;
+const ADMIN = 0x8n; // ADMINISTRATOR permission flag
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
